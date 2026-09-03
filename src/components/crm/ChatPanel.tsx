@@ -39,6 +39,7 @@ import {
   FALLBACK_MODELS,
   getPersona,
   getSettings,
+  MISSING_KEY_MESSAGE,
   toChatHistory,
 } from "@/lib/openrouter";
 import type { Message, Subscriber } from "@/lib/crm";
@@ -112,7 +113,7 @@ export function ChatPanel({
     setGenerating(true);
     try {
       const [settings, persona] = await Promise.all([getSettings(), getPersona()]);
-      if (!settings.openrouter_api_key) throw new Error("Add an OpenRouter API key in Settings");
+      if (!settings.openrouter_api_key?.trim()) throw new Error(MISSING_KEY_MESSAGE);
       const content = await chatCompletion({
         apiKey: settings.openrouter_api_key,
         model: settings.default_model || FALLBACK_MODELS[0]!,
@@ -126,6 +127,7 @@ export function ChatPanel({
       setSuggestion(content);
       setRemaining(Math.floor(Math.random() * (480 - 120 + 1)) + 120);
     } catch (e) {
+      console.error("[generate] failed", e);
       toast.error(e instanceof Error ? e.message : "Generation failed");
     } finally {
       setGenerating(false);
@@ -137,7 +139,7 @@ export function ChatPanel({
     setSummarising(true);
     try {
       const settings = await getSettings();
-      if (!settings.openrouter_api_key) throw new Error("Add an OpenRouter API key in Settings");
+      if (!settings.openrouter_api_key?.trim()) throw new Error(MISSING_KEY_MESSAGE);
       const conversation = messages
         .slice(-20)
         .map((m) => `${m.role}: ${m.content}`)
@@ -157,6 +159,7 @@ export function ChatPanel({
       });
       setSummary(content);
     } catch (e) {
+      console.error("[summarise] failed", e);
       toast.error(e instanceof Error ? e.message : "Summary failed");
     } finally {
       setSummarising(false);
