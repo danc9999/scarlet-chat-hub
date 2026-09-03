@@ -1,7 +1,16 @@
-import { MessageSquare, Send, Sparkles } from "lucide-react";
+import { Check, Copy, MessageSquare, Send, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  buildSystemPrompt,
+  chatCompletion,
+  FALLBACK_MODELS,
+  getPersona,
+  getSettings,
+  toChatHistory,
+} from "@/lib/openrouter";
 import type { Message, Subscriber } from "@/lib/crm";
 import { cn } from "@/lib/utils";
 
@@ -17,11 +26,25 @@ export function ChatPanel({
   sending?: boolean;
 }) {
   const [draft, setDraft] = useState("");
+  const [suggestion, setSuggestion] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [remaining, setRemaining] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length, subscriber?.id]);
+
+  useEffect(() => {
+    setSuggestion("");
+    setRemaining(0);
+  }, [subscriber?.id]);
+
+  useEffect(() => {
+    if (remaining <= 0) return;
+    const t = setTimeout(() => setRemaining((r) => r - 1), 1000);
+    return () => clearTimeout(t);
+  }, [remaining]);
 
   if (!subscriber) {
     return (
@@ -35,11 +58,37 @@ export function ChatPanel({
     );
   }
 
-  async function submit() {
-    const content = draft.trim();
-    if (!content) return;
-    setDraft("");
-    await onSend(content);
+  const activeSubscriber = subscriber;
+
+  async function submit(content: string, clear: () => void) {
+    const trimmed = content.trim();
+    if (!trimmed) return;
+    clear();
+    await onSend(trimmed);
+  }
+
+  async function generate() {
+    setGenerating(true);
+    try {
+      const [settings, persona] = await Promise.all([getSettings(), getPersona()]);
+      if (!settings.openrouter_api_key) throw new Error("Add an OpenRouter API key in Settings");
+      const content = await chatCompletion({
+        apiKey: settings.openrouter_api_key,
+        model: settings.default_model || FALLBACK_MODELS[0]!,
+        temperature: 0.85,
+        maxTokens: 300,
+        messages: [
+          { role: "system", content: buildSystemPrompt(persona, activeSubscriber) },
+          ...toChatHistory(messages),
+        ],
+      });
+      setSuggestion(content);
+      setRemaining(Math.floor(Math.random() * (480 - 120 + 1)) + 120);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
   }
 
   return (
@@ -61,15 +110,13 @@ export function ChatPanel({
           </p>
         )}
         {messages.map((m) => {
-          const mine = m.role !== "subscriber";
+          const mine = m.role !== "subscriber" && m.role !== "user";
           return (
             <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
               <div
                 className={cn(
                   "max-w-[80%] rounded-xl border px-3 py-2",
-                  mine
-                    ? "border-primary/30 bg-primary/10"
-                    : "border-border bg-card",
+                  mine ? "border-primary/30 bg-primary/10" : "border-border bg-card",
                 )}
               >
                 <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -78,6 +125,7 @@ export function ChatPanel({
                     <span className="rounded border border-border px-1.5 py-px">{m.sent_by}</span>
                   )}
                   {m.imported && <span className="text-accent-foreground">imported</span>}
+                  {mine && <CopyButton value={m.content} />}
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed">{m.content}</p>
               </div>
@@ -97,21 +145,78 @@ export function ChatPanel({
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
-              void submit();
+              void submit(draft, () => setDraft(""));
             }
           }}
         />
         <div className="mt-2 flex items-center justify-between gap-2">
-          <Button variant="outline" size="sm" disabled title="AI generation comes later">
+          <Button variant="outline" size="sm" disabled={generating} onClick={() => void generate()}>
             <Sparkles className="size-4" />
-            Generate
+            {generating ? "Generating…" : "Generate"}
           </Button>
-          <Button size="sm" onClick={() => void submit()} disabled={sending || !draft.trim()}>
+          <Button
+            size="sm"
+            onClick={() => void submit(draft, () => setDraft(""))}
+            disabled={sending || !draft.trim()}
+          >
             <Send className="size-4" />
             Send
           </Button>
         </div>
+
+        {suggestion && (
+          <div className="mt-3 space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+              <span>AI suggestion — review before sending</span>
+              <span className={cn(remaining <= 0 && "text-primary")}>
+                {remaining > 0 ? `Send in ${remaining}s` : "Ready to send"}
+              </span>
+            </div>
+            <Textarea
+              value={suggestion}
+              onChange={(e) => setSuggestion(e.target.value)}
+              rows={4}
+              className="resize-none bg-background"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setSuggestion("")}>
+                Discard
+              </Button>
+              <Button
+                size="sm"
+                disabled={sending || !suggestion.trim()}
+                onClick={() =>
+                  void submit(suggestion, () => {
+                    setSuggestion("");
+                    setRemaining(0);
+                  })
+                }
+              >
+                <Send className="size-4" />
+                Send
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="ml-auto inline-flex items-center gap-1 rounded border border-border px-1.5 py-px hover:text-foreground"
+      onClick={async () => {
+        await navigator.clipboard.writeText(value);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+    >
+      {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+      {copied ? "copied" : "copy"}
+    </button>
   );
 }

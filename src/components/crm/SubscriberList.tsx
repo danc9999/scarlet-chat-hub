@@ -1,4 +1,5 @@
 import { Plus, Users } from "lucide-react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { money, segmentClasses, type Subscriber } from "@/lib/crm";
 import { cn } from "@/lib/utils";
@@ -9,12 +10,14 @@ export function SubscriberList({
   onSelect,
   onAdd,
   adding,
+  headerAction,
 }: {
   subscribers: Subscriber[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onAdd: () => void;
   adding?: boolean;
+  headerAction?: ReactNode;
 }) {
   return (
     <div className="flex h-full flex-col bg-sidebar">
@@ -27,10 +30,13 @@ export function SubscriberList({
             {subscribers.length} subscribers
           </p>
         </div>
-        <Button size="sm" onClick={onAdd} disabled={adding}>
-          <Plus className="size-4" />
-          Add
-        </Button>
+        <div className="flex items-center gap-2">
+          {headerAction}
+          <Button size="sm" onClick={onAdd} disabled={adding}>
+            <Plus className="size-4" />
+            Add
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
