@@ -1,24 +1,47 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Scarlett CRM — Subscriber Relationship Console" },
+      {
+        name: "description",
+        content:
+          "Scarlett CRM is a dark, minimal subscriber CRM for managing chats, segments and subscriber profiles in one console.",
+      },
+      { property: "og:title", content: "Scarlett CRM — Subscriber Relationship Console" },
+      {
+        property: "og:description",
+        content:
+          "Manage subscribers, chat threads and profiles from one dark, minimal console.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      navigate({ to: data.session ? "/console" : "/auth", replace: true });
+    });
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="flex min-h-screen items-center justify-center bg-background">
+      <h1 className="font-display text-lg tracking-[0.3em] text-primary">SCARLETT CRM</h1>
+    </main>
   );
 }
