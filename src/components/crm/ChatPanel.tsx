@@ -1,13 +1,16 @@
 import {
+  BookOpen,
   CalendarPlus,
   Check,
   Copy,
   Eraser,
+  Loader2,
   MessageSquare,
   MoreVertical,
   Send,
   Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -32,6 +35,7 @@ import {
 import {
   buildSystemPrompt,
   chatCompletion,
+  EXTRACTION_MODEL,
   FALLBACK_MODELS,
   getPersona,
   getSettings,
@@ -62,6 +66,8 @@ export function ChatPanel({
   const [generating, setGenerating] = useState(false);
   const [remaining, setRemaining] = useState(0);
   const [confirm, setConfirm] = useState<"delete" | "clear" | null>(null);
+  const [summary, setSummary] = useState("");
+  const [summarising, setSummarising] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
 
@@ -72,6 +78,7 @@ export function ChatPanel({
   useEffect(() => {
     setSuggestion("");
     setRemaining(0);
+    setSummary("");
   }, [subscriber?.id]);
 
   useEffect(() => {
@@ -125,6 +132,37 @@ export function ChatPanel({
     }
   }
 
+  async function summarise() {
+    if (messages.length === 0) return;
+    setSummarising(true);
+    try {
+      const settings = await getSettings();
+      if (!settings.openrouter_api_key) throw new Error("Add an OpenRouter API key in Settings");
+      const conversation = messages
+        .slice(-20)
+        .map((m) => `${m.role}: ${m.content}`)
+        .join("\n\n");
+      const content = await chatCompletion({
+        apiKey: settings.openrouter_api_key,
+        model: EXTRACTION_MODEL,
+        temperature: 0,
+        maxTokens: 400,
+        messages: [
+          { role: "system", content: "You are a helpful assistant that summarises conversations concisely." },
+          {
+            role: "user",
+            content: `Summarise this conversation in a single paragraph. Focus on: what was discussed, what you learned about this person, where the relationship stands, and what would be a good next message. Be concise and practical.\n\nConversation:\n${conversation}`,
+          },
+        ],
+      });
+      setSummary(content);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Summary failed");
+    } finally {
+      setSummarising(false);
+    }
+  }
+
   return (
     <div className="flex h-full flex-col bg-background">
       <div className="flex items-center justify-between border-b border-border px-4 py-3 md:px-5">
@@ -138,6 +176,16 @@ export function ChatPanel({
           <span className="hidden text-[11px] text-muted-foreground sm:inline">
             {messages.length} messages
           </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={summarising || messages.length === 0}
+            onClick={() => void summarise()}
+            title="Summarise last session"
+          >
+            {summarising ? <Loader2 className="size-4 animate-spin" /> : <BookOpen className="size-4" />}
+            Summary
+          </Button>
           {onAdvanceDay && (
             <Button variant="outline" size="sm" onClick={onAdvanceDay} title="Advance sequence day">
               <CalendarPlus className="size-4" />
@@ -234,6 +282,19 @@ export function ChatPanel({
       </div>
 
       <div className="border-t border-border p-3 md:p-4">
+        {summary && (
+          <div className="mb-3 flex gap-3 rounded-xl border border-l-4 border-l-amber-500 bg-card p-3">
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-amber-500">Summary</span>
+              </div>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{summary}</p>
+            </div>
+            <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={() => setSummary("")}>
+              <X className="size-4" />
+            </Button>
+          </div>
+        )}
         <Textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
