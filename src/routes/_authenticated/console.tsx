@@ -339,6 +339,10 @@ function Console() {
             onSelect={setSelectedId}
             onAdd={addSubscriber}
             adding={adding}
+            selectedIds={checkedIds}
+            onToggleSelect={toggleChecked}
+            onToggleSelectAll={toggleCheckAll}
+            onBulkDelete={() => void deleteSubscribers(checkedIds)}
             headerAction={
               <IngestDialog
                 onImported={(id) => {
@@ -369,13 +373,17 @@ function Console() {
               messages={messages}
               onSend={sendMessage}
               sending={sending}
+              onDeleteSubscriber={() => selected && void deleteSubscribers([selected.id])}
+              onClearChat={() => void clearChat()}
+              onAdvanceDay={() => void advanceDay()}
             />
           </div>
         </main>
 
         <aside className="hidden w-80 shrink-0 border-l border-border lg:block">
-          <ProfilePanel subscriber={selected} onChange={updateSubscriber} />
+          <ProfilePanel subscriber={selected} messages={messages} onChange={updateSubscriber} />
         </aside>
+
       </div>
     </div>
   );
