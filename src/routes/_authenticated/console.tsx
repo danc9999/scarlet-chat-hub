@@ -195,6 +195,55 @@ function Console() {
     }
   }
 
+  function toggleChecked(id: string) {
+    setCheckedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function toggleCheckAll() {
+    setCheckedIds((prev) => (prev.length === subscribers.length ? [] : subscribers.map((s) => s.id)));
+  }
+
+  async function deleteSubscribers(ids: string[]) {
+    if (ids.length === 0) return;
+    const { error: msgError } = await supabase.from("messages").delete().in("subscriber_id", ids);
+    if (msgError) {
+      toast.error(msgError.message);
+      return;
+    }
+    const { error } = await supabase.from("subscribers").delete().in("id", ids);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setSubscribers((prev) => prev.filter((s) => !ids.includes(s.id)));
+    setCheckedIds((prev) => prev.filter((id) => !ids.includes(id)));
+    if (selectedId && ids.includes(selectedId)) {
+      setSelectedId(null);
+      setMobileChat(false);
+    }
+    toast.success(ids.length === 1 ? "Subscriber deleted" : `${ids.length} subscribers deleted`);
+  }
+
+  async function clearChat() {
+    if (!selected) return;
+    const { error } = await supabase.from("messages").delete().eq("subscriber_id", selected.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setMessages([]);
+    toast.success("Chat cleared");
+  }
+
+  async function advanceDay() {
+    if (!selected) return;
+    await updateSubscriber({ sequence_day: (selected.sequence_day ?? 0) + 1 });
+  }
+
+
+
   async function sendMessage(content: string) {
     if (!selected) return;
     setSending(true);
