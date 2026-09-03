@@ -11,6 +11,7 @@ import { ProfilePanel } from "@/components/crm/ProfilePanel";
 import { IngestDialog } from "@/components/crm/IngestDialog";
 import { extractProfileFromMessage, getSettings } from "@/lib/openrouter";
 import { money, segmentClasses, type Message, type Subscriber } from "@/lib/crm";
+import { rapportScore, rapportTier } from "@/lib/rapport";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/console")({
@@ -430,6 +431,10 @@ function MobileList({
                 <div className="mt-1 flex gap-3 text-[11px] text-muted-foreground">
                   <span>Day {s.sequence_day}</span>
                   <span>{money(s.total_spent)}</span>
+                  <span className={rapportTier(rapportScore(s)).text}>
+                    Rapport {rapportScore(s)}
+                  </span>
+
                 </div>
               </button>
             </li>
