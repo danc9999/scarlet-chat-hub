@@ -387,7 +387,7 @@ function CopyButton({ value }: { value: string }) {
   return (
     <button
       type="button"
-      className="ml-auto inline-flex items-center gap-1 rounded border border-border px-1.5 py-px hover:text-foreground"
+      className="ml-auto inline-flex items-center gap-1 rounded border border-border px-1.5 py-px opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
       onClick={async () => {
         await navigator.clipboard.writeText(value);
         setCopied(true);
