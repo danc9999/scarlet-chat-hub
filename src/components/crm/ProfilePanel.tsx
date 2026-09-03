@@ -8,15 +8,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SEGMENTS, type Subscriber } from "@/lib/crm";
+import { SEGMENTS, type Message, type Subscriber } from "@/lib/crm";
+import { RapportCard } from "@/components/crm/RapportCard";
 
 type Patch = Partial<Subscriber>;
 
 export function ProfilePanel({
   subscriber,
+  messages = [],
   onChange,
 }: {
   subscriber: Subscriber | null;
+  messages?: Message[];
   onChange: (patch: Patch) => void;
 }) {
   if (!subscriber) {
@@ -26,6 +29,9 @@ export function ProfilePanel({
       </div>
     );
   }
+
+  const activeSubscriber = subscriber;
+
 
   const text = (
     key: keyof Subscriber,
