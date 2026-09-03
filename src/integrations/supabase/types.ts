@@ -14,16 +14,176 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      messages: {
+        Row: {
+          content: string
+          id: string
+          imported: boolean
+          role: string
+          sent_by: string | null
+          subscriber_id: string
+          timestamp: string
+        }
+        Insert: {
+          content: string
+          id?: string
+          imported?: boolean
+          role?: string
+          sent_by?: string | null
+          subscriber_id: string
+          timestamp?: string
+        }
+        Update: {
+          content?: string
+          id?: string
+          imported?: boolean
+          role?: string
+          sent_by?: string | null
+          subscriber_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      persona: {
+        Row: {
+          id: number
+          system_prompt: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          system_prompt?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          system_prompt?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          default_model: string | null
+          id: number
+          openrouter_api_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          default_model?: string | null
+          id?: number
+          openrouter_api_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          default_model?: string | null
+          id?: number
+          openrouter_api_key?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          id: string
+          interests: string | null
+          job: string | null
+          last_ppv: number
+          location: string | null
+          name: string
+          notes: string | null
+          platform: string | null
+          preferences: string | null
+          rapport: Json
+          relationship: string | null
+          segment: string
+          sequence_day: number
+          total_spent: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interests?: string | null
+          job?: string | null
+          last_ppv?: number
+          location?: string | null
+          name?: string
+          notes?: string | null
+          platform?: string | null
+          preferences?: string | null
+          rapport?: Json
+          relationship?: string | null
+          segment?: string
+          sequence_day?: number
+          total_spent?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interests?: string | null
+          job?: string | null
+          last_ppv?: number
+          location?: string | null
+          name?: string
+          notes?: string | null
+          platform?: string | null
+          preferences?: string | null
+          rapport?: Json
+          relationship?: string | null
+          segment?: string
+          sequence_day?: number
+          total_spent?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "operator" | "creator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +310,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["operator", "creator"],
+    },
   },
 } as const
