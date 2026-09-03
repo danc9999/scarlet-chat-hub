@@ -117,7 +117,6 @@ export function ChatPanel({
         ],
       });
       setSuggestion(content);
-      setRemaining(Math.floor(Math.random() * (480 - 120 + 1)) + 120);
     } catch (e) {
       console.error("[generate] failed", e);
       toast.error(e instanceof Error ? e.message : "Generation failed");
@@ -332,16 +331,6 @@ export function ChatPanel({
               <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
                 AI suggestion — review before sending
               </span>
-              <span
-                className={cn(
-                  "rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider",
-                  remaining > 0
-                    ? "border-border text-muted-foreground"
-                    : "border-primary/50 bg-primary/15 text-primary",
-                )}
-              >
-                {remaining > 0 ? `Send in ${remaining}s` : "Ready to send"}
-              </span>
             </div>
             <Textarea
               value={suggestion}
@@ -359,7 +348,6 @@ export function ChatPanel({
                 onClick={() =>
                   void submit(suggestion, () => {
                     setSuggestion("");
-                    setRemaining(0);
                   })
                 }
               >
