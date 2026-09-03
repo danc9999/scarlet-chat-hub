@@ -326,6 +326,14 @@ function Console() {
             onSelect={setSelectedId}
             onAdd={addSubscriber}
             adding={adding}
+            headerAction={
+              <IngestDialog
+                onImported={(id) => {
+                  setSelectedId(id);
+                  void loadSubscribers();
+                }}
+              />
+            }
           />
         </aside>
 
