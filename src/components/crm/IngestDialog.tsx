@@ -59,9 +59,12 @@ export function IngestDialog({ onImported }: { onImported?: (subscriberId: strin
 
       let subscriberId = existing?.id ?? null;
       if (subscriberId) {
-        const patch = Object.fromEntries(
-          Object.entries(profile).filter(([, v]) => v !== null && v !== undefined),
-        );
+        const patch: Partial<typeof profile> = {};
+        for (const [key, value] of Object.entries(profile)) {
+          if (value !== null && value !== undefined) {
+            (patch as Record<string, string>)[key] = value;
+          }
+        }
         const { error } = await supabase.from("subscribers").update(patch).eq("id", subscriberId);
         if (error) throw new Error(error.message);
       } else {
