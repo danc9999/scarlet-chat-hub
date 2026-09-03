@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, LogOut, User } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, LogOut, Settings as SettingsIcon, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { SubscriberList } from "@/components/crm/SubscriberList";
 import { ChatPanel } from "@/components/crm/ChatPanel";
 import { ProfilePanel } from "@/components/crm/ProfilePanel";
+import { IngestDialog } from "@/components/crm/IngestDialog";
+import { extractProfileFromMessage, getSettings } from "@/lib/openrouter";
 import { money, segmentClasses, type Message, type Subscriber } from "@/lib/crm";
 import { cn } from "@/lib/utils";
 
