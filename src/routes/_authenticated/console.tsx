@@ -11,6 +11,7 @@ import { ProfilePanel } from "@/components/crm/ProfilePanel";
 import { IngestDialog } from "@/components/crm/IngestDialog";
 import { extractProfileFromMessage, getSettings } from "@/lib/openrouter";
 import { money, segmentClasses, type Message, type Subscriber } from "@/lib/crm";
+import { rapportScore, rapportTier } from "@/lib/rapport";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/console")({
@@ -44,6 +45,8 @@ function Console() {
   const [adding, setAdding] = useState(false);
   const [sending, setSending] = useState(false);
   const [mobileChat, setMobileChat] = useState(false);
+  const [checkedIds, setCheckedIds] = useState<string[]>([]);
+
 
   const selected = useMemo(
     () => subscribers.find((s) => s.id === selectedId) ?? null,
@@ -193,6 +196,55 @@ function Console() {
     }
   }
 
+  function toggleChecked(id: string) {
+    setCheckedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function toggleCheckAll() {
+    setCheckedIds((prev) => (prev.length === subscribers.length ? [] : subscribers.map((s) => s.id)));
+  }
+
+  async function deleteSubscribers(ids: string[]) {
+    if (ids.length === 0) return;
+    const { error: msgError } = await supabase.from("messages").delete().in("subscriber_id", ids);
+    if (msgError) {
+      toast.error(msgError.message);
+      return;
+    }
+    const { error } = await supabase.from("subscribers").delete().in("id", ids);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setSubscribers((prev) => prev.filter((s) => !ids.includes(s.id)));
+    setCheckedIds((prev) => prev.filter((id) => !ids.includes(id)));
+    if (selectedId && ids.includes(selectedId)) {
+      setSelectedId(null);
+      setMobileChat(false);
+    }
+    toast.success(ids.length === 1 ? "Subscriber deleted" : `${ids.length} subscribers deleted`);
+  }
+
+  async function clearChat() {
+    if (!selected) return;
+    const { error } = await supabase.from("messages").delete().eq("subscriber_id", selected.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setMessages([]);
+    toast.success("Chat cleared");
+  }
+
+  async function advanceDay() {
+    if (!selected) return;
+    await updateSubscriber({ sequence_day: (selected.sequence_day ?? 0) + 1 });
+  }
+
+
+
   async function sendMessage(content: string) {
     if (!selected) return;
     setSending(true);
@@ -263,7 +315,7 @@ function Console() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[88vw] p-0 sm:max-w-sm">
               <SheetTitle className="sr-only">Subscriber profile</SheetTitle>
-              <ProfilePanel subscriber={selected} onChange={updateSubscriber} />
+              <ProfilePanel subscriber={selected} messages={messages} onChange={updateSubscriber} />
             </SheetContent>
           </Sheet>
         )}
@@ -288,6 +340,10 @@ function Console() {
             onSelect={setSelectedId}
             onAdd={addSubscriber}
             adding={adding}
+            selectedIds={checkedIds}
+            onToggleSelect={toggleChecked}
+            onToggleSelectAll={toggleCheckAll}
+            onBulkDelete={() => void deleteSubscribers(checkedIds)}
             headerAction={
               <IngestDialog
                 onImported={(id) => {
@@ -318,13 +374,17 @@ function Console() {
               messages={messages}
               onSend={sendMessage}
               sending={sending}
+              onDeleteSubscriber={() => selected && void deleteSubscribers([selected.id])}
+              onClearChat={() => void clearChat()}
+              onAdvanceDay={() => void advanceDay()}
             />
           </div>
         </main>
 
         <aside className="hidden w-80 shrink-0 border-l border-border lg:block">
-          <ProfilePanel subscriber={selected} onChange={updateSubscriber} />
+          <ProfilePanel subscriber={selected} messages={messages} onChange={updateSubscriber} />
         </aside>
+
       </div>
     </div>
   );
@@ -371,6 +431,10 @@ function MobileList({
                 <div className="mt-1 flex gap-3 text-[11px] text-muted-foreground">
                   <span>Day {s.sequence_day}</span>
                   <span>{money(s.total_spent)}</span>
+                  <span className={rapportTier(rapportScore(s)).text}>
+                    Rapport {rapportScore(s)}
+                  </span>
+
                 </div>
               </button>
             </li>

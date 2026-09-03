@@ -62,6 +62,10 @@
   --color-whale: var(--whale);
   --color-regular: var(--regular);
   --color-lurker: var(--lurker);
+  --color-tier-cold: var(--tier-cold);
+  --color-tier-warming: var(--tier-warming);
+  --color-tier-connected: var(--tier-connected);
+  --color-tier-bonded: var(--tier-bonded);
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
 }
@@ -103,6 +107,10 @@
   --whale: oklch(0.82 0.16 85);
   --regular: oklch(0.72 0.10 200);
   --lurker: oklch(0.60 0.02 70);
+  --tier-cold: oklch(0.68 0.015 75);
+  --tier-warming: oklch(0.80 0.15 78);
+  --tier-connected: oklch(0.68 0.16 300);
+  --tier-bonded: oklch(0.75 0.16 150);
 }
 
 .dark {
