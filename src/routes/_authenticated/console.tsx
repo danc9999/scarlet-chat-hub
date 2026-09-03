@@ -123,6 +123,46 @@ function Console() {
     };
   }, [selectedId, loadMessages]);
 
+  // Auto profile extraction from the latest incoming message.
+  const extractedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const last = [...messages].reverse().find((m) => m.role === "user" || m.role === "subscriber");
+    if (!last || last.imported || extractedRef.current.has(last.id)) return;
+    const target = subscribers.find((s) => s.id === last.subscriber_id);
+    if (!target) return;
+    extractedRef.current.add(last.id);
+    void (async () => {
+      try {
+        const settings = await getSettings();
+        if (!settings.openrouter_api_key) return;
+        const facts = await extractProfileFromMessage(settings.openrouter_api_key, last.content);
+        const patch: Partial<Subscriber> = {};
+        if (!target.location && facts.location) patch.location = String(facts.location);
+        if (!target.job && facts.job) patch.job = String(facts.job);
+        if (!target.relationship && facts.relationship) {
+          patch.relationship = String(facts.relationship);
+        }
+        const hobbies = facts.hobbies ?? facts.interests;
+        if (!target.interests && hobbies) patch.interests = String(hobbies);
+        const noteBits = [
+          facts.name ? `Name: ${facts.name}` : null,
+          facts.age ? `Age: ${facts.age}` : null,
+        ].filter(Boolean);
+        if (!target.notes && noteBits.length) patch.notes = noteBits.join("\n");
+        if (Object.keys(patch).length === 0) return;
+        const { error } = await supabase.from("subscribers").update(patch).eq("id", target.id);
+        if (error) return;
+        setSubscribers((prev) =>
+          prev.map((s) => (s.id === target.id ? { ...s, ...patch } : s)),
+        );
+        toast.success("Profile updated");
+      } catch {
+        // background extraction stays silent on failure
+      }
+    })();
+  }, [messages, subscribers]);
+
+
   async function addSubscriber() {
     setAdding(true);
     const { data, error } = await supabase
