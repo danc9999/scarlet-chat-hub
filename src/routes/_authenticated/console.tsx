@@ -245,6 +245,16 @@ function Console() {
             Debug identity
           </Button>
         )}
+        {role === "operator" && (
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Settings"
+            onClick={() => navigate({ to: "/settings" })}
+          >
+            <SettingsIcon className="size-4" />
+          </Button>
+        )}
         {selected && (
           <Sheet>
             <SheetTrigger asChild>
