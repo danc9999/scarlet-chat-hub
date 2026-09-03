@@ -1,8 +1,34 @@
-import { Check, Copy, MessageSquare, Send, Sparkles } from "lucide-react";
+import {
+  CalendarPlus,
+  Check,
+  Copy,
+  Eraser,
+  MessageSquare,
+  MoreVertical,
+  Send,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   buildSystemPrompt,
   chatCompletion,
@@ -19,17 +45,25 @@ export function ChatPanel({
   messages,
   onSend,
   sending,
+  onDeleteSubscriber,
+  onClearChat,
+  onAdvanceDay,
 }: {
   subscriber: Subscriber | null;
   messages: Message[];
   onSend: (content: string) => Promise<void>;
   sending?: boolean;
+  onDeleteSubscriber?: () => void;
+  onClearChat?: () => void;
+  onAdvanceDay?: () => void;
 }) {
   const [draft, setDraft] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [generating, setGenerating] = useState(false);
   const [remaining, setRemaining] = useState(0);
+  const [confirm, setConfirm] = useState<"delete" | "clear" | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
