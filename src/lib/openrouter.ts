@@ -59,6 +59,11 @@ export async function fetchModels(apiKey: string): Promise<string[]> {
   return ids.sort();
 }
 
+export const MISSING_KEY_MESSAGE = "No API key set. Go to Settings to add your OpenRouter key.";
+
+export const DEFAULT_PERSONA_PROMPT =
+  "You are Scarlett, a warm and flirty content creator. Keep responses short and natural.";
+
 export async function chatCompletion(opts: {
   apiKey: string;
   model: string;
@@ -66,30 +71,67 @@ export async function chatCompletion(opts: {
   temperature?: number;
   maxTokens?: number;
 }): Promise<string> {
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${opts.apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: opts.model,
-      messages: opts.messages,
-      temperature: opts.temperature ?? 0.85,
-      max_tokens: opts.maxTokens ?? 300,
-    }),
+  const apiKey = opts.apiKey?.trim();
+  if (!apiKey) throw new Error(MISSING_KEY_MESSAGE);
+  const model = opts.model?.trim() || FALLBACK_MODELS[0]!;
+  console.info("[openrouter] request", {
+    model,
+    keyPreview: `${apiKey.slice(0, 6)}…(${apiKey.length} chars)`,
+    messageCount: opts.messages.length,
+    roles: opts.messages.map((m) => m.role),
   });
+
+  let res: Response;
+  try {
+    res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages: opts.messages,
+        temperature: opts.temperature ?? 0.85,
+        max_tokens: opts.maxTokens ?? 300,
+      }),
+    });
+  } catch (e) {
+    console.error("[openrouter] network error", e);
+    throw new Error(`Network error calling OpenRouter: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`OpenRouter error ${res.status}: ${text.slice(0, 200)}`);
+    console.error("[openrouter] http error", res.status, text);
+    let detail = text.slice(0, 300);
+    try {
+      const parsed = JSON.parse(text) as { error?: { message?: string } };
+      if (parsed.error?.message) detail = parsed.error.message;
+    } catch {
+      /* keep raw text */
+    }
+    throw new Error(`OpenRouter error ${res.status}: ${detail}`);
   }
-  const json = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = json.choices?.[0]?.message?.content?.trim();
-  if (!content) throw new Error("Empty response from model");
+
+  const json = (await res.json().catch(() => null)) as {
+    choices?: Array<{ message?: { content?: string; reasoning?: string }; text?: string; finish_reason?: string }>;
+    error?: { message?: string };
+  } | null;
+  console.info("[openrouter] response", json);
+  if (!json) throw new Error("OpenRouter returned an unreadable response");
+  if (json.error?.message) throw new Error(`OpenRouter error: ${json.error.message}`);
+  const choice = json.choices?.[0];
+  const content =
+    choice?.message?.content?.trim() || choice?.text?.trim() || choice?.message?.reasoning?.trim();
+  if (!content) {
+    throw new Error(
+      `Model "${model}" returned an empty response${choice?.finish_reason ? ` (finish_reason: ${choice.finish_reason})` : ""}. Try a different model in Settings.`,
+    );
+  }
   return content;
 }
+
 
 export function parseJsonLoose<T>(raw: string): T {
   const cleaned = raw
