@@ -35,6 +35,7 @@ import {
 import {
   buildSystemPrompt,
   chatCompletion,
+  EXTRACTION_MODEL,
   FALLBACK_MODELS,
   getPersona,
   getSettings,
