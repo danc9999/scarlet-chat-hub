@@ -275,45 +275,8 @@ function Console() {
     </header>
   );
 
-  if (role === "creator") {
-    return (
-      <div className="flex h-screen flex-col bg-background">
-        {header}
-        <div className="flex min-h-0 flex-1">
-          <aside className="hidden w-64 shrink-0 border-r border-border md:block">
-            <SubscriberList
-              subscribers={subscribers}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              onAdd={addSubscriber}
-              adding={adding}
-            />
-          </aside>
-          <main className="min-w-0 flex-1">
-            {!mobileChat && (
-              <div className="h-full md:hidden">
-                <MobileList
-                  subscribers={subscribers}
-                  onSelect={(id) => {
-                    setSelectedId(id);
-                    setMobileChat(true);
-                  }}
-                />
-              </div>
-            )}
-            <div className={cn("h-full", !mobileChat && "hidden md:block")}>
-              <ChatPanel
-                subscriber={selected}
-                messages={messages}
-                onSend={sendMessage}
-                sending={sending}
-              />
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
+
+
 
   return (
     <div className="flex h-screen flex-col bg-background">
