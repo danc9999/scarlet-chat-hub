@@ -259,22 +259,22 @@ export function ChatPanel({
           </p>
         )}
         {messages.map((m) => {
-          const mine = m.role !== "subscriber" && m.role !== "user";
+          const hers = m.role !== "user" && m.role !== "subscriber";
           return (
-            <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+            <div key={m.id} className={cn("group flex", hers ? "justify-end" : "justify-start")}>
               <div
                 className={cn(
                   "max-w-[80%] rounded-xl border px-3 py-2",
-                  mine ? "border-primary/30 bg-primary/10" : "border-border bg-card",
+                  hers ? "border-primary/40 bg-primary/15" : "border-border bg-muted",
                 )}
               >
                 <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <span>{m.role}</span>
+                  <span className={cn(hers && "text-primary")}>{hers ? "her" : "him"}</span>
                   {m.sent_by && (
                     <span className="rounded border border-border px-1.5 py-px">{m.sent_by}</span>
                   )}
                   {m.imported && <span className="text-accent-foreground">imported</span>}
-                  {mine && <CopyButton value={m.content} />}
+                  <CopyButton value={m.content} />
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed">{m.content}</p>
               </div>
@@ -298,39 +298,56 @@ export function ChatPanel({
             </Button>
           </div>
         )}
-        <Textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={`Message ${subscriber.name}…`}
-          rows={3}
-          className="resize-none"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              void submit(draft, () => setDraft(""));
-            }
-          }}
-        />
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <Button variant="outline" size="sm" disabled={generating} onClick={() => void generate()}>
-            <Sparkles className="size-4" />
-            {generating ? "Generating…" : "Generate"}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => void submit(draft, () => setDraft(""))}
-            disabled={sending || !draft.trim()}
-          >
-            <Send className="size-4" />
-            Send
-          </Button>
+        {/* STEP 1 — his incoming message */}
+        <div className="space-y-2">
+          <label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Paste his message
+          </label>
+          <Textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Paste his incoming message here..."
+            rows={3}
+            className="resize-none"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                void submit(draft, () => setDraft(""), "user");
+              }
+            }}
+          />
+          <div className="flex items-center justify-between gap-2">
+            <Button variant="outline" size="sm" disabled={generating} onClick={() => void generate()}>
+              <Sparkles className="size-4" />
+              {generating ? "Generating…" : "Generate"}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void submit(draft, () => setDraft(""), "user")}
+              disabled={sending || !draft.trim()}
+            >
+              <Send className="size-4" />
+              Save his message
+            </Button>
+          </div>
         </div>
 
+        {/* STEP 2 — AI suggestion */}
         {suggestion && (
-          <div className="mt-3 space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
-            <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
-              <span>AI suggestion — review before sending</span>
-              <span className={cn(remaining <= 0 && "text-primary")}>
+          <div className="mt-3 space-y-2 rounded-xl border border-primary/40 bg-primary/5 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                AI suggestion — review before sending
+              </span>
+              <span
+                className={cn(
+                  "rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider",
+                  remaining > 0
+                    ? "border-border text-muted-foreground"
+                    : "border-primary/50 bg-primary/15 text-primary",
+                )}
+              >
                 {remaining > 0 ? `Send in ${remaining}s` : "Ready to send"}
               </span>
             </div>
