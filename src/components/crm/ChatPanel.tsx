@@ -1,13 +1,16 @@
 import {
+  BookOpen,
   CalendarPlus,
   Check,
   Copy,
   Eraser,
+  Loader2,
   MessageSquare,
   MoreVertical,
   Send,
   Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
