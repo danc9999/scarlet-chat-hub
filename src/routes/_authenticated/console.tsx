@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/console")({
 
 function Console() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<"operator" | "creator" | null>(null);
+  const [role, setRole] = useState<"admin" | "user" | null>(null);
   const [email, setEmail] = useState<string>("");
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -60,7 +60,8 @@ function Console() {
         .eq("id", data.user.id)
         .maybeSingle();
       const metaRole = (data.user.user_metadata as { role?: string } | null)?.role;
-      setRole((profile?.role || metaRole || "creator") as "operator" | "creator");
+      const raw = (profile?.role || metaRole || "user") as string;
+      setRole(raw === "admin" || raw === "operator" ? "admin" : "user");
     });
   }, []);
 
@@ -197,9 +198,9 @@ function Console() {
     setSending(true);
     const { error } = await supabase.from("messages").insert({
       subscriber_id: selected.id,
-      role: "operator",
+      role: "assistant",
       content,
-      sent_by: email || "operator",
+      sent_by: email || "admin",
     });
     setSending(false);
     if (error) {
@@ -230,22 +231,20 @@ function Console() {
         <span className="font-display text-xs tracking-[0.28em] text-primary">SCARLETT CRM</span>
         {role && (
           <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">
-            {role}
+            {role === "admin" ? "Admin" : "User"}
           </span>
         )}
       </div>
       <div className="flex items-center gap-1">
-        {role === "operator" && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden text-[10px] uppercase tracking-widest text-muted-foreground sm:inline-flex"
-            onClick={() => toast.info(`${email || "unknown"} — ${role}`)}
-          >
-            Debug identity
-          </Button>
-        )}
-        {role === "operator" && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hidden text-[10px] uppercase tracking-widest text-muted-foreground sm:inline-flex"
+          onClick={() => toast.info(`${email || "unknown"} — ${role ?? "unknown"}`)}
+        >
+          Debug identity
+        </Button>
+        {role === "admin" && (
           <Button
             variant="ghost"
             size="icon"
@@ -275,45 +274,8 @@ function Console() {
     </header>
   );
 
-  if (role === "creator") {
-    return (
-      <div className="flex h-screen flex-col bg-background">
-        {header}
-        <div className="flex min-h-0 flex-1">
-          <aside className="hidden w-64 shrink-0 border-r border-border md:block">
-            <SubscriberList
-              subscribers={subscribers}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              onAdd={addSubscriber}
-              adding={adding}
-            />
-          </aside>
-          <main className="min-w-0 flex-1">
-            {!mobileChat && (
-              <div className="h-full md:hidden">
-                <MobileList
-                  subscribers={subscribers}
-                  onSelect={(id) => {
-                    setSelectedId(id);
-                    setMobileChat(true);
-                  }}
-                />
-              </div>
-            )}
-            <div className={cn("h-full", !mobileChat && "hidden md:block")}>
-              <ChatPanel
-                subscriber={selected}
-                messages={messages}
-                onSend={sendMessage}
-                sending={sending}
-              />
-            </div>
-          </main>
-        </div>
-      </div>
-    );
-  }
+
+
 
   return (
     <div className="flex h-screen flex-col bg-background">

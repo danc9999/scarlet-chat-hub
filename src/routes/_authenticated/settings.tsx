@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import {
   FALLBACK_MODELS,
   fetchModels,
@@ -52,6 +53,26 @@ function SettingsPage() {
   const [loadingModels, setLoadingModels] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [savingPersona, setSavingPersona] = useState(false);
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) return setAllowed(false);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      const raw = (profile?.role ?? (data.user.user_metadata as { role?: string } | null)?.role) as
+        | string
+        | undefined;
+      const isAdmin = raw === "admin" || raw === "operator";
+      setAllowed(isAdmin);
+      if (!isAdmin) navigate({ to: "/console", replace: true });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -106,6 +127,16 @@ function SettingsPage() {
   }
 
   const options = models.includes(model) || !model ? models : [model, ...models];
+
+  if (allowed !== true) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">
+          {allowed === null ? "Loading…" : "Admins only"}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

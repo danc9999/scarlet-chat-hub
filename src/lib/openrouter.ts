@@ -134,7 +134,7 @@ export function buildSystemPrompt(persona: string, subscriber: Subscriber): stri
 
 export function toChatHistory(messages: Message[]): ChatMessage[] {
   return messages.slice(-20).map((m) => ({
-    role: m.role === "assistant" || m.role === "operator" ? "assistant" : "user",
+    role: m.role === "assistant" || m.role === "operator" || m.role === "admin" ? "assistant" : "user",
     content: m.content,
   }));
 }
