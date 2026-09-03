@@ -314,7 +314,7 @@ function Console() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[88vw] p-0 sm:max-w-sm">
               <SheetTitle className="sr-only">Subscriber profile</SheetTitle>
-              <ProfilePanel subscriber={selected} onChange={updateSubscriber} />
+              <ProfilePanel subscriber={selected} messages={messages} onChange={updateSubscriber} />
             </SheetContent>
           </Sheet>
         )}
