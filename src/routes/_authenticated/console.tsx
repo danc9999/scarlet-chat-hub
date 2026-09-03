@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/console")({
 
 function Console() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<"operator" | "creator" | null>(null);
+  const [role, setRole] = useState<"admin" | "user" | null>(null);
   const [email, setEmail] = useState<string>("");
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -60,7 +60,8 @@ function Console() {
         .eq("id", data.user.id)
         .maybeSingle();
       const metaRole = (data.user.user_metadata as { role?: string } | null)?.role;
-      setRole((profile?.role || metaRole || "creator") as "operator" | "creator");
+      const raw = (profile?.role || metaRole || "user") as string;
+      setRole(raw === "admin" || raw === "operator" ? "admin" : "user");
     });
   }, []);
 
@@ -197,9 +198,9 @@ function Console() {
     setSending(true);
     const { error } = await supabase.from("messages").insert({
       subscriber_id: selected.id,
-      role: "operator",
+      role: "assistant",
       content,
-      sent_by: email || "operator",
+      sent_by: email || "admin",
     });
     setSending(false);
     if (error) {
@@ -230,7 +231,7 @@ function Console() {
         <span className="font-display text-xs tracking-[0.28em] text-primary">SCARLETT CRM</span>
         {role && (
           <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">
-            {role}
+            {role === "admin" ? "Admin" : "User"}
           </span>
         )}
       </div>

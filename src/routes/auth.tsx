@@ -88,7 +88,7 @@ function AuthPage() {
             {loading ? "Signing in…" : "Sign in"}
           </Button>
           <p className="pt-1 text-center text-xs text-muted-foreground">
-            Accounts are created by an operator. No self-registration.
+            Accounts are created by an admin. No self-registration.
           </p>
         </form>
       </div>
