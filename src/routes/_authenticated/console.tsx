@@ -57,7 +57,8 @@ function Console() {
         .select("role")
         .eq("id", data.user.id)
         .maybeSingle();
-      setRole((profile?.role as "operator" | "creator") ?? "creator");
+      const metaRole = (data.user.user_metadata as { role?: string } | null)?.role;
+      setRole((profile?.role || metaRole || "creator") as "operator" | "creator");
     });
   }, []);
 
@@ -192,6 +193,16 @@ function Console() {
         )}
       </div>
       <div className="flex items-center gap-1">
+        {role === "operator" && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden text-[10px] uppercase tracking-widest text-muted-foreground sm:inline-flex"
+            onClick={() => toast.info(`${email || "unknown"} — ${role}`)}
+          >
+            Debug identity
+          </Button>
+        )}
         {selected && (
           <Sheet>
             <SheetTrigger asChild>
