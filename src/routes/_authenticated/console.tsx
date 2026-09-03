@@ -235,17 +235,15 @@ function Console() {
         )}
       </div>
       <div className="flex items-center gap-1">
-        {role === "operator" && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden text-[10px] uppercase tracking-widest text-muted-foreground sm:inline-flex"
-            onClick={() => toast.info(`${email || "unknown"} — ${role}`)}
-          >
-            Debug identity
-          </Button>
-        )}
-        {role === "operator" && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hidden text-[10px] uppercase tracking-widest text-muted-foreground sm:inline-flex"
+          onClick={() => toast.info(`${email || "unknown"} — ${role ?? "unknown"}`)}
+        >
+          Debug identity
+        </Button>
+        {role === "admin" && (
           <Button
             variant="ghost"
             size="icon"
