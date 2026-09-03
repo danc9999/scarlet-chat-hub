@@ -282,6 +282,19 @@ export function ChatPanel({
       </div>
 
       <div className="border-t border-border p-3 md:p-4">
+        {summary && (
+          <div className="mb-3 flex gap-3 rounded-xl border border-l-4 border-l-amber-500 bg-card p-3">
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-amber-500">Summary</span>
+              </div>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{summary}</p>
+            </div>
+            <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={() => setSummary("")}>
+              <X className="size-4" />
+            </Button>
+          </div>
+        )}
         <Textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
