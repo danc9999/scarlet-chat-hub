@@ -102,11 +102,11 @@ export function ChatPanel({
 
   const activeSubscriber = subscriber;
 
-  async function submit(content: string, clear: () => void) {
+  async function submit(content: string, clear: () => void, role: "user" | "assistant" = "assistant") {
     const trimmed = content.trim();
     if (!trimmed) return;
     clear();
-    await onSend(trimmed);
+    await onSend(trimmed, role);
   }
 
   async function generate() {
