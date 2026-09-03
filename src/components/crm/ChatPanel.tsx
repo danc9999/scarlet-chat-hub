@@ -127,15 +127,79 @@ export function ChatPanel({
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <div className="hidden items-center justify-between border-b border-border px-5 py-3 md:flex">
-        <div>
-          <p className="text-sm font-medium">{subscriber.name}</p>
+      <div className="flex items-center justify-between border-b border-border px-4 py-3 md:px-5">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{subscriber.name}</p>
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
             {subscriber.segment} · day {subscriber.sequence_day}
           </p>
         </div>
-        <span className="text-[11px] text-muted-foreground">{messages.length} messages</span>
+        <div className="flex items-center gap-2">
+          <span className="hidden text-[11px] text-muted-foreground sm:inline">
+            {messages.length} messages
+          </span>
+          {onAdvanceDay && (
+            <Button variant="outline" size="sm" onClick={onAdvanceDay} title="Advance sequence day">
+              <CalendarPlus className="size-4" />
+              Day
+            </Button>
+          )}
+          {(onClearChat || onDeleteSubscriber) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" title="Subscriber actions">
+                  <MoreVertical className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {onClearChat && (
+                  <DropdownMenuItem onSelect={() => setConfirm("clear")}>
+                    <Eraser className="size-4" />
+                    Clear chat
+                  </DropdownMenuItem>
+                )}
+                {onDeleteSubscriber && (
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onSelect={() => setConfirm("delete")}
+                  >
+                    <Trash2 className="size-4" />
+                    Delete subscriber
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
+
+      <AlertDialog open={confirm !== null} onOpenChange={(open) => !open && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm === "delete" ? `Delete ${subscriber.name}?` : "Clear this chat?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm === "delete"
+                ? "This permanently removes the subscriber and all of their messages."
+                : "This permanently removes every message in this thread. The profile is kept."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirm === "delete") onDeleteSubscriber?.();
+                if (confirm === "clear") onClearChat?.();
+                setConfirm(null);
+              }}
+            >
+              {confirm === "delete" ? "Delete" : "Clear"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-5 md:px-5">
         {messages.length === 0 && (
