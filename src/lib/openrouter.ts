@@ -168,18 +168,22 @@ export function buildSubscriberContext(s: Subscriber): string {
 
 export function buildSystemPrompt(persona: string, subscriber: Subscriber): string {
   const context = buildSubscriberContext(subscriber);
-  const base = persona?.trim() || "You are Scarlett, a warm, flirty creator chatting with a fan.";
+  const base = persona?.trim() || DEFAULT_PERSONA_PROMPT;
   return base.includes("{subscriber_context}")
     ? base.replaceAll("{subscriber_context}", context)
     : `${base}\n\n${context}`;
 }
 
 export function toChatHistory(messages: Message[]): ChatMessage[] {
-  return messages.slice(-20).map((m) => ({
-    role: m.role === "assistant" || m.role === "operator" || m.role === "admin" ? "assistant" : "user",
-    content: m.content,
-  }));
+  return messages
+    .slice(-20)
+    .filter((m) => Boolean(m.content?.trim()))
+    .map((m) => ({
+      role: m.role === "user" ? ("user" as const) : ("assistant" as const),
+      content: m.content,
+    }));
 }
+
 
 export type ExtractedProfile = {
   name?: string | null;
