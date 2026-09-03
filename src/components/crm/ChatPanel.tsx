@@ -176,6 +176,16 @@ export function ChatPanel({
           <span className="hidden text-[11px] text-muted-foreground sm:inline">
             {messages.length} messages
           </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={summarising || messages.length === 0}
+            onClick={() => void summarise()}
+            title="Summarise last session"
+          >
+            {summarising ? <Loader2 className="size-4 animate-spin" /> : <BookOpen className="size-4" />}
+            Summary
+          </Button>
           {onAdvanceDay && (
             <Button variant="outline" size="sm" onClick={onAdvanceDay} title="Advance sequence day">
               <CalendarPlus className="size-4" />
