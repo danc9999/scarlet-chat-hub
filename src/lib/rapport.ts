@@ -122,31 +122,31 @@ export function rapportTier(score: number): RapportTier {
   if (score <= 25) {
     return {
       label: "Cold",
-      text: "text-muted-foreground",
-      bar: "bg-muted-foreground",
-      badge: "border-border bg-muted/40 text-muted-foreground",
+      text: "text-tier-cold",
+      bar: "bg-tier-cold",
+      badge: "border-border bg-muted/40 text-tier-cold",
     };
   }
   if (score <= 50) {
     return {
       label: "Warming",
-      text: "text-primary",
-      bar: "bg-primary",
-      badge: "border-primary/40 bg-primary/15 text-primary",
+      text: "text-tier-warming",
+      bar: "bg-tier-warming",
+      badge: "border-tier-warming/40 bg-tier-warming/15 text-tier-warming",
     };
   }
   if (score <= 75) {
     return {
       label: "Connected",
-      text: "text-whale",
-      bar: "bg-whale",
-      badge: "border-whale/40 bg-whale/15 text-whale",
+      text: "text-tier-connected",
+      bar: "bg-tier-connected",
+      badge: "border-tier-connected/40 bg-tier-connected/15 text-tier-connected",
     };
   }
   return {
     label: "Bonded",
-    text: "text-regular",
-    bar: "bg-regular",
-    badge: "border-regular/40 bg-regular/15 text-regular",
+    text: "text-tier-bonded",
+    bar: "bg-tier-bonded",
+    badge: "border-tier-bonded/40 bg-tier-bonded/15 text-tier-bonded",
   };
 }
