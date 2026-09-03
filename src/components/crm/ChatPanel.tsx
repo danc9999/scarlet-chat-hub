@@ -131,6 +131,37 @@ export function ChatPanel({
     }
   }
 
+  async function summarise() {
+    if (messages.length === 0) return;
+    setSummarising(true);
+    try {
+      const settings = await getSettings();
+      if (!settings.openrouter_api_key) throw new Error("Add an OpenRouter API key in Settings");
+      const conversation = messages
+        .slice(-20)
+        .map((m) => `${m.role}: ${m.content}`)
+        .join("\n\n");
+      const content = await chatCompletion({
+        apiKey: settings.openrouter_api_key,
+        model: EXTRACTION_MODEL,
+        temperature: 0,
+        maxTokens: 400,
+        messages: [
+          { role: "system", content: "You are a helpful assistant that summarises conversations concisely." },
+          {
+            role: "user",
+            content: `Summarise this conversation in a single paragraph. Focus on: what was discussed, what you learned about this person, where the relationship stands, and what would be a good next message. Be concise and practical.\n\nConversation:\n${conversation}`,
+          },
+        ],
+      });
+      setSummary(content);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Summary failed");
+    } finally {
+      setSummarising(false);
+    }
+  }
+
   return (
     <div className="flex h-full flex-col bg-background">
       <div className="flex items-center justify-between border-b border-border px-4 py-3 md:px-5">
