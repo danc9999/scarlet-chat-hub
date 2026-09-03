@@ -245,12 +245,12 @@ function Console() {
 
 
 
-  async function sendMessage(content: string) {
+  async function sendMessage(content: string, role: "user" | "assistant" = "assistant") {
     if (!selected) return;
     setSending(true);
     const { error } = await supabase.from("messages").insert({
       subscriber_id: selected.id,
-      role: "assistant",
+      role,
       content,
       sent_by: email || "admin",
     });
