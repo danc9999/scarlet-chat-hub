@@ -65,7 +65,6 @@ export function ChatPanel({
   const [draft, setDraft] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [remaining, setRemaining] = useState(0);
   const [confirm, setConfirm] = useState<"delete" | "clear" | null>(null);
   const [summary, setSummary] = useState("");
   const [summarising, setSummarising] = useState(false);
@@ -78,15 +77,8 @@ export function ChatPanel({
 
   useEffect(() => {
     setSuggestion("");
-    setRemaining(0);
     setSummary("");
   }, [subscriber?.id]);
-
-  useEffect(() => {
-    if (remaining <= 0) return;
-    const t = setTimeout(() => setRemaining((r) => r - 1), 1000);
-    return () => clearTimeout(t);
-  }, [remaining]);
 
   if (!subscriber) {
     return (
