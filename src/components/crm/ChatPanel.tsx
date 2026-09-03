@@ -56,7 +56,7 @@ export function ChatPanel({
 }: {
   subscriber: Subscriber | null;
   messages: Message[];
-  onSend: (content: string) => Promise<void>;
+  onSend: (content: string, role?: "user" | "assistant") => Promise<void>;
   sending?: boolean;
   onDeleteSubscriber?: () => void;
   onClearChat?: () => void;
