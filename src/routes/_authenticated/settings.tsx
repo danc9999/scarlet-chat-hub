@@ -128,6 +128,16 @@ function SettingsPage() {
 
   const options = models.includes(model) || !model ? models : [model, ...models];
 
+  if (allowed !== true) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">
+          {allowed === null ? "Loading…" : "Admins only"}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-2 border-b border-border px-4 py-2">
