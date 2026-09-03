@@ -57,7 +57,8 @@ function Console() {
         .select("role")
         .eq("id", data.user.id)
         .maybeSingle();
-      setRole((profile?.role as "operator" | "creator") ?? "creator");
+      const metaRole = (data.user.user_metadata as { role?: string } | null)?.role;
+      setRole((profile?.role || metaRole || "creator") as "operator" | "creator");
     });
   }, []);
 
