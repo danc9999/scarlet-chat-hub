@@ -79,6 +79,18 @@ export function ProfilePanel({
         <p className="text-sm font-medium">{subscriber.name}</p>
       </div>
       <div key={subscriber.id} className="space-y-4 px-4 py-4">
+        <RapportCard
+          subscriber={activeSubscriber}
+          messages={messages}
+          onManualChange={(key, value) =>
+            onChange({
+              rapport: {
+                ...((activeSubscriber.rapport ?? {}) as Record<string, unknown>),
+                [key]: value,
+              },
+            } as Patch)
+          }
+        />
         {text("name", "Name")}
         {text("platform", "Platform")}
         <div className="space-y-1.5">
