@@ -44,6 +44,8 @@ function Console() {
   const [adding, setAdding] = useState(false);
   const [sending, setSending] = useState(false);
   const [mobileChat, setMobileChat] = useState(false);
+  const [checkedIds, setCheckedIds] = useState<string[]>([]);
+
 
   const selected = useMemo(
     () => subscribers.find((s) => s.id === selectedId) ?? null,
