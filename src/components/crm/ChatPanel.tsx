@@ -303,23 +303,6 @@ export function ChatPanel({
             Paste his message
           </label>
           <Textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Paste his incoming message here..."
-            rows={3}
-            className="resize-none"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                void submit(draft, () => setDraft(""), "user");
-              }
-            }}
-          />
-          <div className="flex items-center justify-between gap-2">
-            <Button variant="outline" size="sm" disabled={generating} onClick={() => void generate()}>
-              <Sparkles className="size-4" />
-              {generating ? "Generating…" : "Generate"}
-            </Button>
           <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
