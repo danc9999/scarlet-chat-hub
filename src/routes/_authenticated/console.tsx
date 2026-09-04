@@ -262,6 +262,15 @@ function Console() {
     void loadMessages(selected.id);
   }
 
+  async function updateMessage(id: string, content: string) {
+    const { error } = await supabase.from("messages").update({ content }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (selected) void loadMessages(selected.id);
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
@@ -373,6 +382,7 @@ function Console() {
               subscriber={selected}
               messages={messages}
               onSend={sendMessage}
+              onUpdateMessage={updateMessage}
               sending={sending}
               onDeleteSubscriber={() => selected && void deleteSubscribers([selected.id])}
               onClearChat={() => void clearChat()}
