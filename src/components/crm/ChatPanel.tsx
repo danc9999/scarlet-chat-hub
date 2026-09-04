@@ -7,6 +7,7 @@ import {
   Loader2,
   MessageSquare,
   MoreVertical,
+  RefreshCw,
   Send,
   Sparkles,
   Trash2,
