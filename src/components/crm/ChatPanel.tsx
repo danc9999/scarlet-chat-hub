@@ -320,14 +320,23 @@ export function ChatPanel({
               <Sparkles className="size-4" />
               {generating ? "Generating…" : "Generate"}
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => void submit(draft, () => setDraft(""), "user")}
-              disabled={sending || !draft.trim()}
-            >
-              <Send className="size-4" />
-              Save his message
+          <Textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Paste his incoming message here..."
+            rows={3}
+            className="resize-none"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                void generate();
+              }
+            }}
+          />
+          <div className="flex items-center justify-end gap-2">
+            <Button size="sm" disabled={generating || sending} onClick={() => void generate()}>
+              <Sparkles className="size-4" />
+              {generating ? "Generating…" : "Generate"}
             </Button>
           </div>
         </div>
@@ -337,7 +346,7 @@ export function ChatPanel({
           <div className="mt-3 space-y-2 rounded-xl border border-primary/40 bg-primary/5 p-3">
             <div className="flex items-center justify-between gap-2">
               <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
-                AI suggestion — review before sending
+                AI suggestion — copy and send manually
               </span>
             </div>
             <Textarea
@@ -351,16 +360,17 @@ export function ChatPanel({
                 Discard
               </Button>
               <Button
+                variant="outline"
                 size="sm"
-                disabled={sending || !suggestion.trim()}
-                onClick={() =>
-                  void submit(suggestion, () => {
-                    setSuggestion("");
-                  })
-                }
+                disabled={generating}
+                onClick={() => void generate({ save: false })}
               >
-                <Send className="size-4" />
-                Send
+                <RefreshCw className={cn("size-4", generating && "animate-spin")} />
+                Regen
+              </Button>
+              <Button size="sm" onClick={() => void copyText(suggestion)}>
+                <Copy className="size-4" />
+                Copy
               </Button>
             </div>
           </div>
@@ -370,9 +380,12 @@ export function ChatPanel({
   );
 }
 
-function CopyButton({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
+async function copyText(value: string) {
+  await navigator.clipboard.writeText(value);
+  toast.success("Copied");
+}
+
+
     <button
       type="button"
       className="ml-auto inline-flex items-center gap-1 rounded border border-border px-1.5 py-px opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
