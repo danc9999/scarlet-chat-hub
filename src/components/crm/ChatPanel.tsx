@@ -303,7 +303,6 @@ export function ChatPanel({
             Paste his message
           </label>
           <Textarea
-          <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Paste his incoming message here..."
