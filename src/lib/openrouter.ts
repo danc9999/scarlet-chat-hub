@@ -153,7 +153,7 @@ function nameFromNotes(notes: string | null): string | null {
 export function buildSubscriberContext(s: Subscriber): string {
   const lines = ["WHAT YOU ALREADY KNOW — treat as hard facts, never contradict:"];
   if (s.location) lines.push(`He is from ${s.location}`);
-  const realName = nameFromNotes(s.notes);
+  const realName = s.first_name?.trim() || nameFromNotes(s.notes);
   if (realName) lines.push(`His name is ${realName}`);
   if (s.job) lines.push(`His job: ${s.job}`);
   if (s.relationship) lines.push(`Relationship: ${s.relationship}`);

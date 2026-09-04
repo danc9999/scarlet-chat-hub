@@ -148,10 +148,8 @@ function Console() {
         }
         const hobbies = facts.hobbies ?? facts.interests;
         if (!target.interests && hobbies) patch.interests = String(hobbies);
-        const noteBits = [
-          facts.name ? `Name: ${facts.name}` : null,
-          facts.age ? `Age: ${facts.age}` : null,
-        ].filter(Boolean);
+        if (!target.first_name && facts.name) patch.first_name = String(facts.name);
+        const noteBits = [facts.age ? `Age: ${facts.age}` : null].filter(Boolean);
         if (!target.notes && noteBits.length) patch.notes = noteBits.join("\n");
         if (Object.keys(patch).length === 0) return;
         const { error } = await supabase.from("subscribers").update(patch).eq("id", target.id);
