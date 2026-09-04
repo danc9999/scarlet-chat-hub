@@ -49,6 +49,7 @@ export function ChatPanel({
   subscriber,
   messages,
   onSend,
+  onUpdateMessage,
   sending,
   onDeleteSubscriber,
   onClearChat,
@@ -57,13 +58,14 @@ export function ChatPanel({
   subscriber: Subscriber | null;
   messages: Message[];
   onSend: (content: string, role?: "user" | "assistant") => Promise<void>;
+  onUpdateMessage?: (id: string, content: string) => Promise<void>;
   sending?: boolean;
   onDeleteSubscriber?: () => void;
   onClearChat?: () => void;
   onAdvanceDay?: () => void;
 }) {
   const [draft, setDraft] = useState("");
-  const [suggestion, setSuggestion] = useState("");
+  const [regenId, setRegenId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [confirm, setConfirm] = useState<"delete" | "clear" | null>(null);
   const [summary, setSummary] = useState("");
@@ -76,7 +78,6 @@ export function ChatPanel({
   }, [messages.length, subscriber?.id]);
 
   useEffect(() => {
-    setSuggestion("");
     setSummary("");
   }, [subscriber?.id]);
 
@@ -94,14 +95,14 @@ export function ChatPanel({
 
   const activeSubscriber = subscriber;
 
-  async function generate(opts?: { save?: boolean }) {
+  async function generate() {
     const incoming = draft.trim();
     setGenerating(true);
     try {
       const [settings, persona] = await Promise.all([getSettings(), getPersona()]);
       if (!settings.openrouter_api_key?.trim()) throw new Error(MISSING_KEY_MESSAGE);
       const history = toChatHistory(messages);
-      if (opts?.save !== false && incoming) {
+      if (incoming) {
         setDraft("");
         history.push({ role: "user", content: incoming });
         await onSend(incoming, "user");
@@ -116,7 +117,7 @@ export function ChatPanel({
           ...history,
         ],
       });
-      setSuggestion(content);
+      await onSend(content, "assistant");
     } catch (e) {
       console.error("[generate] failed", e);
       toast.error(e instanceof Error ? e.message : "Generation failed");
@@ -125,6 +126,32 @@ export function ChatPanel({
     }
   }
 
+  async function regenerate(target: Message) {
+    if (!onUpdateMessage) return;
+    setRegenId(target.id);
+    try {
+      const [settings, persona] = await Promise.all([getSettings(), getPersona()]);
+      if (!settings.openrouter_api_key?.trim()) throw new Error(MISSING_KEY_MESSAGE);
+      const idx = messages.findIndex((m) => m.id === target.id);
+      const priorMessages = idx >= 0 ? messages.slice(0, idx) : messages;
+      const content = await chatCompletion({
+        apiKey: settings.openrouter_api_key,
+        model: settings.default_model || FALLBACK_MODELS[0]!,
+        temperature: 0.85,
+        maxTokens: 300,
+        messages: [
+          { role: "system", content: buildSystemPrompt(persona, activeSubscriber) },
+          ...toChatHistory(priorMessages),
+        ],
+      });
+      await onUpdateMessage(target.id, content);
+    } catch (e) {
+      console.error("[regenerate] failed", e);
+      toast.error(e instanceof Error ? e.message : "Regeneration failed");
+    } finally {
+      setRegenId(null);
+    }
+  }
 
   async function summarise() {
     if (messages.length === 0) return;
@@ -267,12 +294,31 @@ export function ChatPanel({
                   )}
                   {m.imported && <span className="text-accent-foreground">imported</span>}
                   <CopyButton value={m.content} />
+                  {hers && onUpdateMessage && (
+                    <button
+                      type="button"
+                      disabled={regenId === m.id}
+                      className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-px opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                      onClick={() => void regenerate(m)}
+                    >
+                      <RefreshCw className={cn("size-3", regenId === m.id && "animate-spin")} />
+                      regen
+                    </button>
+                  )}
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed">{m.content}</p>
               </div>
             </div>
           );
         })}
+        {generating && (
+          <div className="flex justify-end">
+            <div className="flex max-w-[80%] items-center gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-3 py-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin text-primary" />
+              Generating reply…
+            </div>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
@@ -316,40 +362,6 @@ export function ChatPanel({
           </div>
         </div>
 
-        {/* STEP 2 — AI suggestion */}
-        {suggestion && (
-          <div className="mt-3 space-y-2 rounded-xl border border-primary/40 bg-primary/5 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
-                AI suggestion — copy and send manually
-              </span>
-            </div>
-            <Textarea
-              value={suggestion}
-              onChange={(e) => setSuggestion(e.target.value)}
-              rows={4}
-              className="resize-none bg-background"
-            />
-            <div className="flex items-center justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setSuggestion("")}>
-                Discard
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={generating}
-                onClick={() => void generate({ save: false })}
-              >
-                <RefreshCw className={cn("size-4", generating && "animate-spin")} />
-                Regen
-              </Button>
-              <Button size="sm" onClick={() => void copyText(suggestion)}>
-                <Copy className="size-4" />
-                Copy
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
