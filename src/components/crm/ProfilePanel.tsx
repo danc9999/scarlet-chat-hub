@@ -91,7 +91,8 @@ export function ProfilePanel({
             } as Patch)
           }
         />
-        {text("name", "Name")}
+        {text("name", "Username")}
+        {text("first_name", "First name")}
         {text("platform", "Platform")}
         <div className="space-y-1.5">
           <Label className="text-[11px] uppercase tracking-widest text-muted-foreground">
