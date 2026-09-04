@@ -367,7 +367,9 @@ async function copyText(value: string) {
   toast.success("Copied");
 }
 
-
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
     <button
       type="button"
       className="ml-auto inline-flex items-center gap-1 rounded border border-border px-1.5 py-px opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
@@ -381,4 +383,5 @@ async function copyText(value: string) {
       {copied ? "copied" : "copy"}
     </button>
   );
+}
 }
