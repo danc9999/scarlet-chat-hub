@@ -101,11 +101,18 @@ export function ChatPanel({
     await onSend(trimmed, role);
   }
 
-  async function generate() {
+  async function generate(opts?: { save?: boolean }) {
+    const incoming = draft.trim();
     setGenerating(true);
     try {
       const [settings, persona] = await Promise.all([getSettings(), getPersona()]);
       if (!settings.openrouter_api_key?.trim()) throw new Error(MISSING_KEY_MESSAGE);
+      const history = toChatHistory(messages);
+      if (opts?.save !== false && incoming) {
+        setDraft("");
+        history.push({ role: "user", content: incoming });
+        await onSend(incoming, "user");
+      }
       const content = await chatCompletion({
         apiKey: settings.openrouter_api_key,
         model: settings.default_model || FALLBACK_MODELS[0]!,
@@ -113,7 +120,7 @@ export function ChatPanel({
         maxTokens: 300,
         messages: [
           { role: "system", content: buildSystemPrompt(persona, activeSubscriber) },
-          ...toChatHistory(messages),
+          ...history,
         ],
       });
       setSuggestion(content);
@@ -124,6 +131,7 @@ export function ChatPanel({
       setGenerating(false);
     }
   }
+
 
   async function summarise() {
     if (messages.length === 0) return;
