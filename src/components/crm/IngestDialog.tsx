@@ -42,13 +42,13 @@ export function IngestDialog({ onImported }: { onImported?: (subscriberId: strin
         .maybeSingle();
 
       const notesParts = [
-        result.name ? `Name: ${result.name}` : null,
         result.age ? `Age: ${result.age}` : null,
         result.notes ?? null,
       ].filter(Boolean);
 
       const profile = {
         name: username,
+        first_name: result.name ?? null,
         platform: "reddit",
         location: result.location ?? null,
         relationship: result.relationship ?? null,
