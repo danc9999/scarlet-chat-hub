@@ -384,4 +384,3 @@ function CopyButton({ value }: { value: string }) {
     </button>
   );
 }
-}
