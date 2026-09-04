@@ -7,7 +7,7 @@ import {
   Loader2,
   MessageSquare,
   MoreVertical,
-  Send,
+  RefreshCw,
   Sparkles,
   Trash2,
   X,
@@ -94,18 +94,18 @@ export function ChatPanel({
 
   const activeSubscriber = subscriber;
 
-  async function submit(content: string, clear: () => void, role: "user" | "assistant" = "assistant") {
-    const trimmed = content.trim();
-    if (!trimmed) return;
-    clear();
-    await onSend(trimmed, role);
-  }
-
-  async function generate() {
+  async function generate(opts?: { save?: boolean }) {
+    const incoming = draft.trim();
     setGenerating(true);
     try {
       const [settings, persona] = await Promise.all([getSettings(), getPersona()]);
       if (!settings.openrouter_api_key?.trim()) throw new Error(MISSING_KEY_MESSAGE);
+      const history = toChatHistory(messages);
+      if (opts?.save !== false && incoming) {
+        setDraft("");
+        history.push({ role: "user", content: incoming });
+        await onSend(incoming, "user");
+      }
       const content = await chatCompletion({
         apiKey: settings.openrouter_api_key,
         model: settings.default_model || FALLBACK_MODELS[0]!,
@@ -113,7 +113,7 @@ export function ChatPanel({
         maxTokens: 300,
         messages: [
           { role: "system", content: buildSystemPrompt(persona, activeSubscriber) },
-          ...toChatHistory(messages),
+          ...history,
         ],
       });
       setSuggestion(content);
@@ -124,6 +124,7 @@ export function ChatPanel({
       setGenerating(false);
     }
   }
+
 
   async function summarise() {
     if (messages.length === 0) return;
@@ -303,23 +304,14 @@ export function ChatPanel({
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
-                void submit(draft, () => setDraft(""), "user");
+                void generate();
               }
             }}
           />
-          <div className="flex items-center justify-between gap-2">
-            <Button variant="outline" size="sm" disabled={generating} onClick={() => void generate()}>
+          <div className="flex items-center justify-end gap-2">
+            <Button size="sm" disabled={generating || sending} onClick={() => void generate()}>
               <Sparkles className="size-4" />
               {generating ? "Generating…" : "Generate"}
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => void submit(draft, () => setDraft(""), "user")}
-              disabled={sending || !draft.trim()}
-            >
-              <Send className="size-4" />
-              Save his message
             </Button>
           </div>
         </div>
@@ -329,7 +321,7 @@ export function ChatPanel({
           <div className="mt-3 space-y-2 rounded-xl border border-primary/40 bg-primary/5 p-3">
             <div className="flex items-center justify-between gap-2">
               <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
-                AI suggestion — review before sending
+                AI suggestion — copy and send manually
               </span>
             </div>
             <Textarea
@@ -343,16 +335,17 @@ export function ChatPanel({
                 Discard
               </Button>
               <Button
+                variant="outline"
                 size="sm"
-                disabled={sending || !suggestion.trim()}
-                onClick={() =>
-                  void submit(suggestion, () => {
-                    setSuggestion("");
-                  })
-                }
+                disabled={generating}
+                onClick={() => void generate({ save: false })}
               >
-                <Send className="size-4" />
-                Send
+                <RefreshCw className={cn("size-4", generating && "animate-spin")} />
+                Regen
+              </Button>
+              <Button size="sm" onClick={() => void copyText(suggestion)}>
+                <Copy className="size-4" />
+                Copy
               </Button>
             </div>
           </div>
@@ -360,6 +353,11 @@ export function ChatPanel({
       </div>
     </div>
   );
+}
+
+async function copyText(value: string) {
+  await navigator.clipboard.writeText(value);
+  toast.success("Copied");
 }
 
 function CopyButton({ value }: { value: string }) {
