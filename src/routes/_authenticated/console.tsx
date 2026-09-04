@@ -252,7 +252,7 @@ function Console() {
       subscriber_id: selected.id,
       role,
       content,
-      sent_by: email || "admin",
+      sent_by: role === "user" ? selected.name?.trim() || "subscriber" : email || "admin",
     });
     setSending(false);
     if (error) {
