@@ -367,11 +367,6 @@ export function ChatPanel({
   );
 }
 
-async function copyText(value: string) {
-  await navigator.clipboard.writeText(value);
-  toast.success("Copied");
-}
-
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return (
