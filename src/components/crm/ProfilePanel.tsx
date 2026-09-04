@@ -76,7 +76,11 @@ export function ProfilePanel({
     <div className="h-full overflow-y-auto bg-sidebar">
       <div className="border-b border-border px-4 py-3">
         <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Profile</p>
-        <p className="text-sm font-medium">{subscriber.name}</p>
+        <p className="text-sm font-medium">
+          {subscriber.first_name?.trim()
+            ? `${subscriber.first_name} · ${subscriber.name}`
+            : subscriber.name}
+        </p>
       </div>
       <div key={subscriber.id} className="space-y-4 px-4 py-4">
         <RapportCard
